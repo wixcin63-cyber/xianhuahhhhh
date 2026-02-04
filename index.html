@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>新传人格测试</title>
+  <title>新传学术人格测试</title>
   
   <!-- Global Error Handler for Debugging -->
   <script>
@@ -178,7 +178,87 @@
       { id: 30, chapter: "第四篇章：最终的共振频率", text: "探索结束，当你按下提交键，你认为这代表？", a: "一次关于自我的“文本分析”", b: "寻找同行者的“信号发射”", weights: { a: ['deconstructor', 'watchman'], b: ['tuner', 'translator'] } },
     ];
 
+    // --- Landing Page Component ---
+    const LandingPage = ({ onUnlock }) => {
+      const [code, setCode] = useState('');
+      const [error, setError] = useState('');
+
+      const handleSubmit = (e) => {
+        e.preventDefault();
+        if (code === 'qiantaixinchuan') {
+          onUnlock();
+        } else {
+          setError('兑换码无效 / Invalid Code');
+        }
+      };
+
+      return (
+        <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-[#F8F8F8] text-[#1A1A1A] font-serif">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="max-w-md w-full bg-white rounded-sm shadow-xl p-10 border border-black/5"
+          >
+            <div className="text-center mb-10">
+               <div className="flex justify-center gap-4 mb-8 opacity-40">
+                  <Compass className="w-6 h-6" />
+                  <Shield className="w-6 h-6" />
+                  <Layers className="w-6 h-6" />
+               </div>
+               <h1 className="text-3xl font-bold mb-3 tracking-widest text-[#1A1A1A]">新传学术人格测试</h1>
+               <p className="text-[#1A1A1A]/50 text-xs tracking-[0.2em] uppercase">Journalism Persona Test</p>
+            </div>
+
+            <div className="space-y-4 mb-10">
+               <FeatureItem icon={<BookOpen size={16} />} text="30道深度情境选题" />
+               <FeatureItem icon={<Radio size={16} />} text="6种核心媒介人格" />
+               <FeatureItem icon={<Download size={16} />} text="生成专属灵魂海报" />
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div>
+                <label className="block text-[10px] font-bold text-[#1A1A1A]/40 mb-2 uppercase tracking-[0.2em]">
+                  Access Code
+                </label>
+                <input 
+                  type="text" 
+                  value={code}
+                  onChange={(e) => {
+                    setCode(e.target.value);
+                    setError('');
+                  }}
+                  placeholder="请输入兑换码"
+                  className="w-full px-4 py-3 rounded-sm bg-[#F8F8F8] border border-black/10 focus:border-black/30 focus:outline-none transition-all text-center tracking-widest font-mono text-sm"
+                />
+                {error && <p className="text-red-800/60 text-[10px] mt-2 text-center tracking-wider">{error}</p>}
+              </div>
+              
+              <button 
+                type="submit"
+                className="w-full bg-[#1A1A1A] text-white py-4 rounded-sm text-xs tracking-[0.4em] uppercase font-bold hover:bg-black transition-all flex items-center justify-center gap-2 group"
+              >
+                <span>开启旅程</span>
+                <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </button>
+            </form>
+            
+            <div className="mt-8 text-center border-t border-black/5 pt-6">
+                <p className="text-[9px] text-[#1A1A1A]/20 tracking-[0.2em] uppercase">© 2026 Journalism Echo Project</p>
+            </div>
+          </motion.div>
+        </div>
+      );
+    };
+
+    const FeatureItem = ({ icon, text }) => (
+      <div className="flex items-center gap-4 p-4 rounded-sm bg-[#F8F8F8] text-[#1A1A1A]/70 text-xs tracking-wider border border-black/5">
+        <div className="opacity-50">{icon}</div>
+        <span>{text}</span>
+      </div>
+    );
+
     const App = () => {
+      const [unlocked, setUnlocked] = useState(false);
       const [screen, setScreen] = useState('welcome'); // welcome, quiz, analyzing, result
       const [currentIdx, setCurrentIdx] = useState(0);
       const [answers, setAnswers] = useState({});
@@ -420,6 +500,10 @@
           </div>
         </motion.div>
       );
+
+      if (!unlocked) {
+        return <LandingPage onUnlock={() => setUnlocked(true)} />;
+      }
 
       return (
         <div className="min-h-screen bg-[#F8F8F8] text-[#1A1A1A] selection:bg-black selection:text-white overflow-x-hidden font-serif">
