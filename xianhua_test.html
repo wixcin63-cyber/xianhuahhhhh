@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>潜意识重逢 - 显化测试</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Fix for Lucide React UMD expecting window.react -->
+    <script>
+        window.react = window.React;
+        window.reactDOM = window.ReactDOM;
+    </script>
+    
+    <!-- Load Lucide React UMD -->
+    <script src="https://unpkg.com/lucide-react@latest/dist/umd/lucide-react.min.js"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;400;500;700&display=swap');
+        body {
+            font-family: 'Noto Serif SC', serif;
+        }
+    </style>
+</head>
+<body class="bg-[#FDF8F7]">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        
+        // Destructure icons from LucideReact global
+        const { 
+            Sparkles, ArrowRight, Zap, RefreshCw, Download, Share2, ChevronRight, Heart, Map: MapIcon, Compass, 
+            ShieldCheck, Gem, UserCheck, Anchor, Radio, EyeOff, IceCream, Waves, Mountain, Hand, Link: LinkIcon, 
+            History: HistoryIcon, WifiOff, X, QrCode, Stars, Wand2, MessageCircleHeart 
+        } = LucideReact;
+
+        const App = () => {
+            const [stage, setStage] = useState('cover'); // cover, landing, testing, milestone, calculating, result, poster
+            const [currentQuestion, setCurrentQuestion] = useState(0);
+            const [answers, setAnswers] = useState([]);
+            const [scores, setScores] = useState({ 
+                Safety: 0, Clarity: 0, Worth: 0, Abundance: 0, Flow: 0, Trust: 0, Identity: 0, Persistence: 0
+            });
+            const [result, setResult] = useState(null);
+            const [activeTab, setActiveTab] = useState('archetype');
+
+            // 30道深度潜意识投射题
+            const questions = [
+                { text: "这场‘寻宝游戏’开始了，你选择带上哪件初始装备？", options: [{ t: "直觉的指南针", v: "Clarity" }, { t: "勇气的敲门砖", v: "Trust" }, { t: "自我接纳的提灯", v: "Safety" }] },
+                { text: "前方出现了一道名为‘恐惧’的屏障，你会如何应对？", options: [{ t: "正视它，亲手将其击碎", v: "Clarity" }, { t: "绕过它，寻找新的出口", v: "Flow" }, { t: "坐在它面前，感受它的温度", v: "Safety" }] },
+                { text: "在地图的交界处，你遇见了‘未来的自己’，TA正忙着？", options: [{ t: "在新的故事里尽情欢笑", v: "Identity" }, { t: "在山顶俯瞰新的领地", v: "Persistence" }, { t: "在花园里悠然自得", v: "Flow" }] },
+                { text: "路边出现了一个宝箱，你认为里面装的是？", options: [{ t: "宇宙偏爱的证明", v: "Worth" }, { t: "一段被遗忘的记忆", v: "Identity" }, { t: "通往新世界的钥匙", v: "Abundance" }] },
+                { text: "当你解锁了一张从未见过的地图，你的第一感受是？", options: [{ t: "终于等到这一天了", v: "Abundance" }, { t: "这里会有危险吗？", v: "Safety" }, { t: "我想立刻探索每一个角落", v: "Persistence" }] },
+                { text: "想象你正走在通往成功的方向上，路上的行人？", options: [{ t: "都是来指引我的线索", v: "Trust" }, { t: "正在观察我的表现", v: "Worth" }, { t: "都在各自的轨道里", v: "Flow" }] },
+                { text: "如果显化是一份礼物，你觉得它应该在？", options: [{ t: "我变完美的时候降临", v: "Worth" }, { t: "我放松、自由的瞬间出现", v: "Flow" }, { t: "那一刻开启我的决心", v: "Persistence" }] },
+                { text: "你认为金钱在这场寻宝游戏中代表？", options: [{ t: "解锁高级地图的积分", v: "Abundance" }, { t: "被宠爱的物质显化", v: "Worth" }, { t: "一种自由移动的能量", v: "Flow" }] },
+                { text: "在镜子里看着自己的眼睛，你最想击碎的是？", options: [{ t: "‘我不够好’的执念", v: "Worth" }, { t: "对未知的担忧", v: "Trust" }, { t: "过往身份的束缚", v: "Identity" }] },
+                { text: "如果明早你突然显化了 100 万，你最担心的第一件事是？", options: [{ t: "这笔钱会很快花光", v: "Abundance" }, { t: "我必须付出巨大代价", v: "Safety" }, { t: "我不适应有钱后的自己", v: "Identity" }] },
+                { text: "寻宝途中天黑了，你会选择？", options: [{ t: "信任直觉，继续前行", v: "Trust" }, { t: "在安全的地方等待黎明", v: "Safety" }, { t: "享受此刻的静谧", v: "Flow" }] },
+                { text: "如果你的灵魂有一句暗号，你觉得是？", options: [{ t: "我已归来", v: "Identity" }, { t: "持之以恒", v: "Persistence" }, { t: "顺流而行", v: "Flow" }] },
+                { text: "微风吹过，你听到了远方的呼唤，那声音？", options: [{ t: "似曾相识", v: "Identity" }, { t: "充满指引感", v: "Clarity" }, { t: "让人想立刻起跑", v: "Persistence" }] },
+                { text: "路边的一株植物正在快速生长，它的颜色是？", options: [{ t: "治愈的翠绿", v: "Safety" }, { t: "华丽的金黄", v: "Abundance" }, { t: "深邃的幽蓝", v: "Clarity" }] },
+                { text: "你发现了一本没有文字的书，你会？", options: [{ t: "画下未来的蓝图", v: "Clarity" }, { t: "写下新的身份", v: "Identity" }, { t: "感受当下的纸质", v: "Flow" }] },
+                { text: "当你感到疲惫时，潜意识里的港湾通常是？", options: [{ t: "温暖的旧屋", v: "Safety" }, { t: "静谧的山谷", v: "Flow" }, { t: "云端之城", v: "Clarity" }] },
+                { text: "如果可以用一种自然现象代表现在的你，那是？", options: [{ t: "破晓的曙光", v: "Persistence" }, { t: "静谧的月光", v: "Identity" }, { t: "流动的云烟", v: "Flow" }] },
+                { text: "在一个十字路口，指示牌模糊不清，你会？", options: [{ t: "闭上眼问问直觉", v: "Trust" }, { t: "随机选一个方向", v: "Abundance" }, { t: "分析地图线索", v: "Clarity" }] },
+                { text: "你梦见自己飞过一片海，海面上映射着？", options: [{ t: "无数个曾经的你", v: "Identity" }, { t: "耀眼的宝藏", v: "Abundance" }, { t: "远方的灯塔", v: "Persistence" }] },
+                { text: "突然出现的陌生人给了你一个微笑，你觉得TA？", options: [{ t: "是宇宙派来的向导", v: "Trust" }, { t: "是一个普通的善意", v: "Worth" }, { t: "是另一个时空的你", v: "Identity" }] },
+                { text: "当你站在舞台中心，聚光灯打在你身上，你感到？", options: [{ t: "局促不安", v: "Safety" }, { t: "理应如此", v: "Worth" }, { t: "享受其中", v: "Identity" }] },
+                { text: "在古老的图书馆里，你会翻开哪一类书？", options: [{ t: "起源的奥秘", v: "Identity" }, { t: "未来的预言", v: "Persistence" }, { t: "当下的诗集", v: "Flow" }] },
+                { text: "如果你能控制天气，此时你希望？", options: [{ t: "阳光灿烂", v: "Abundance" }, { t: "细雨绵绵", v: "Flow" }, { t: "微风习习", v: "Clarity" }] },
+                { text: "在一个深潭边，你看到水底闪烁着光芒，你会？", options: [{ t: "犹豫是否危险", v: "Safety" }, { t: "毫不犹豫跳下去", v: "Worth" }, { t: "寻找工具打捞", v: "Clarity" }] },
+                { text: "如果你发现了一颗会说话的星星，它会对你说？", options: [{ t: "我就在你的心里", v: "Identity" }, { t: "飞向更远的地方", v: "Persistence" }, { t: "静静闪耀即可", v: "Flow" }] },
+                { text: "显化的过程在你看来，更像是？", options: [{ t: "痛苦的蜕变", v: "Worth" }, { t: "愉悦的解锁", v: "Flow" }, { t: "精准的显影", v: "Clarity" }] },
+                { text: "如果显化需要一个牺牲品，你认为那是？", options: [{ t: "曾经的自己", v: "Identity" }, { t: "当下的安稳", v: "Safety" }, { t: "努力的时间", v: "Persistence" }] },
+                { text: "如果有一个时空胶囊留给未来的自己，你会放进？", options: [{ t: "一个坚定的承诺", v: "Persistence" }, { t: "一颗感谢的眼泪", v: "Identity" }, { t: "一张空白支票", v: "Abundance" }] },
+                { text: "你认为‘宿命’是？", options: [{ t: "无法逃离的牢笼", v: "Safety" }, { t: "可以修改的剧本", v: "Clarity" }, { t: "自然而然的流动", v: "Flow" }] },
+                { text: "重逢的门就在眼前，你最后的心情是？", options: [{ t: "平静而深邃", v: "Flow" }, { t: "迫切而热烈", v: "Abundance" }, { t: "通透而明亮", v: "Clarity" }] },
+            ];
+
+            const handleStart = () => setStage('landing');
+            const handleToTest = () => setStage('testing');
+
+            const resetTest = () => {
+                setStage('landing');
+                setCurrentQuestion(0);
+                setAnswers([]);
+                setScores({ Safety: 0, Clarity: 0, Worth: 0, Abundance: 0, Flow: 0, Trust: 0, Identity: 0, Persistence: 0 });
+                setResult(null);
+            };
+
+            const handleAnswer = (val) => {
+                const newAnswers = [...answers, val];
+                setAnswers(newAnswers);
+                if ((currentQuestion + 1) === 10 || (currentQuestion + 1) === 20) {
+                    setStage('milestone');
+                } else if (currentQuestion < questions.length - 1) {
+                    setCurrentQuestion(currentQuestion + 1);
+                } else {
+                    processResult(newAnswers);
+                }
+            };
+
+            const nextAfterMilestone = () => {
+                setCurrentQuestion(currentQuestion + 1);
+                setStage('testing');
+            }
+
+            const processResult = (finalAnswers) => {
+                setStage('calculating');
+                setTimeout(() => {
+                    const counts = finalAnswers.reduce((acc, val) => {
+                        acc[val] = (acc[val] || 0) + 1;
+                        return acc;
+                    }, { Safety: 0, Clarity: 0, Worth: 0, Abundance: 0, Flow: 0, Trust: 0, Identity: 0, Persistence: 0 });
+                    
+                    setScores(counts);
+                    const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+                    const topDim = sorted[0][0];
+                    const bottomDim = sorted[sorted.length - 1][0];
+
+                    // 深度补丁库：重逢仪式 (潜意识行为) vs 显化工具 (物理工具) 完全独立
+                    const dimDict = {
+                        Clarity: { pos: "高频预见力", title: "虚实之眼的领航员", neg: "脑力内耗", icon: <Radio className="w-5 h-5 opacity-80" />,
+                            mantras: ["我看见，我唤醒，我成就。", "我的视野穿透迷雾，精准抓取未来的显影。", "实享在我笔下生花，万物随心而动。", "我是蓝图的绘制者，清晰度是我的超能力。", "我所预见的，即是宇宙正在为我准备的。"],
+                            rituals: ["准备一杯纯净水，注视倒影，想象所有杂乱思绪沉入水底。"]
+                        },
+                        Flow: { pos: "谐振共鸣力", title: "随风起舞的谐频者", neg: "随波逐流", icon: <Waves className="w-5 h-5 opacity-80" />,
+                            mantras: ["我不再试图控制河流的方向，我本身就是河流。", "我与宇宙频率丝滑共振，一切顺势而生。", "松开手掌的抓取，世界便会奔你而来。", "我在心流中行走，奇迹总是不费力地降临。", "顺应即是最大的力量。"],
+                            rituals: ["点燃一根线香，闭上眼跟随那种漫无目的却和谐的流动。"]
+                        },
+                        Abundance: { pos: "极性吸引力", title: "丰盛法则的宠儿", neg: "匮乏感", icon: <Gem className="w-5 h-5 opacity-80" />,
+                            mantras: ["我承认我的丰盛，我接收我的奇迹。", "我是磁场的中心，金钱与爱自动聚集。", "我的生命本自具足。", "我选择看向拥有的，宇宙宝藏便向我开启。"],
+                            rituals: ["寻找身边 3 件正处于‘满溢’或‘丰足’状态的事物，并在心中标记。"]
+                        },
+                        Trust: { pos: "纯粹信念力", title: "维度契约的持有者", neg: "怀疑焦虑", icon: <ShieldCheck className="w-5 h-5 opacity-80" />,
+                            mantras: ["我的信念即实享，宇宙永远与我同在。", "无需证据的笃定，是改写现实的契约。", "深信不可见的奇迹。"],
+                            rituals: ["拿出一张白纸，写下愿望并签上名字，作为与宇宙签订的正式契约。"]
+                        },
+                        Worth: { pos: "绝对显化权", title: "王座上的创造神", neg: "自卑缩减", icon: <IceCream className="w-5 h-5 opacity-80" />,
+                            mantras: ["本自圆满，即刻归位。", "深知值得世间美好，无需任何理由。", "坐上显化的王座。"],
+                            rituals: ["对着镜子注视眼睛，直到发自内心地对自己微笑，并说：‘我值得这一切’。"]
+                        },
+                        Identity: { pos: "内核自洽力", title: "极星般的守望者", neg: "外在认可依赖", icon: <UserCheck className="w-5 h-5 opacity-80" />,
+                            mantras: ["我不再是过去的回响，我是未来的主导者。", "内核坚如磐石，不再被任何声音定义。", "我与高我蓝图契合。"],
+                            rituals: ["整理衣柜，扔掉一件让你联想起‘不顺过去’的旧衣服，腾出空间。"]
+                        },
+                        Persistence: { pos: "永恒稳定性", title: "永恒频率的守护者", neg: "三分钟热度", icon: <RefreshCw className="w-5 h-5 opacity-80" />,
+                            mantras: ["我与我的愿望同步，直到奇迹全然发生。", "能量如恒星般稳定，不随幻象而熄灭。", "细水长流的专注。"],
+                            rituals: ["注视钟表的秒针走完一整圈，练习在时间流逝中保持不动的锚点感。"]
+                        },
+                        Safety: { pos: "稳固扎根力", title: "大地频率的锚定者", neg: "恐惧改变", icon: <Anchor className="w-5 h-5 opacity-80" />,
+                            mantras: ["我允许美好的事物不费力地来到身边。", "在绝对安全中，张开双臂迎接改变。", "成功是安全的。"],
+                            rituals: ["用温热的水泡脚并深呼吸，告诉身体：我现在非常安全，我允许变动。"]
+                        }
+                    };
+
+                    const resultContentDict = {
+                        Clarity: { cosmicEcho: "你的大脑是超高频雷达，捕捉无数未来。但预见力常陷内耗。花在担心失败上的能量远超显化。关掉头脑警报器，相信你看透虚实的眼睛。", toolName: "【脚本实验室】", toolUsage: "连续3天用第三人称描写理想生活，像写剧本一样剥离逻辑噪音。" },
+                        Flow: { cosmicEcho: "你像在努力屏住呼吸的人。因太害怕失控，反而推开了丰盛。你的天赋在于共振，顺水起舞。松开手，跃入心流，宇宙的频率会在此刻与你同步。", toolName: "【真空释放盒】", toolUsage: "准备实体盒子，写下想控制的细节放进去，告诉自己：这部分交给宇宙。" },
+                        Worth: { cosmicEcho: "你深处拥有显化权，但被“自卑缩减”的旧剧本淤塞。你并不需要通过“多余的努力”来换取宠爱，重逢即是归位。你是王座上的创造神。", toolName: "【随身重逢镜】", toolUsage: "准备一面随身小镜子，每当怀疑产生，在镜中对自己微笑确认存在感。" },
+                        Abundance: { cosmicEcho: "天生自带磁场。目前的匮乏感是滤镜，让你看向“还没有”的那部分。擦亮滤镜，承认已经拥有。看向丰盛，丰盛自来。", toolName: "【种子金币】", toolUsage: "在钱包里放一枚代表丰盛源头的专属硬币，每次看到它都确认为接收状态。" },
+                        Trust: { cosmicEcho: "你拥有无需证据的笃定。目前的怀疑是拉锯战。先信，后见。收回怀疑，把信念当成笔，奇迹就在转念之间。", toolName: "【信念锚定桩】", toolUsage: "选择一个固定的物理动作（如转动手环）作为‘契约已成’的暗示。" },
+                        Identity: { cosmicEcho: "渴望新生活，却依然认同受挫旧身份。这种错位产生拉力. 显化不是得到什么，而是成为。你不必向任何人证明。", toolName: "【角色置换镜】", toolUsage: "每日预演 1 分钟：如果是已经成功的我，此时会用什么样的神态站立？" },
+                        Persistence: { cosmicEcho: "显化像烧开水，你在99度关火. 瓦解怀疑，再坚持一个呼吸. 守住波段，奇迹会在最平凡时刻降临。", toolName: "【余震捕捉器】", toolUsage: "每天睡前记录 1 个显化的微小迹象，作为能量回馈的证据。" },
+                        Safety: { cosmicEcho: "潜意识植入平庸才安全的程序. 每当触碰成功，身体就制造焦虑让你撤回. 训练身体：成功是安全的，你可以稳站巅峰。", toolName: "【身体导航仪】", toolUsage: "感到焦虑时，按压足心 1 分钟，训练潜意识寻找被大地托举的安全感。" }
+                    };
+
+                    const topInfo = dimDict[topDim] || dimDict.Safety;
+                    const bottomInfo = dimDict[bottomDim] || dimDict.Safety;
+                    const baseContent = resultContentDict[topDim] || resultContentDict.Clarity;
+                    
+                    setResult({
+                        ...baseContent,
+                        potentialTitle: topInfo.pos,
+                        personaName: topInfo.title,
+                        personaQuote: `你天生拥有${topInfo.pos}，只需疏通能量池，世界便会奔你而来。`,
+                        clearingTitle: `待疏通能量池：${bottomInfo.neg}`,
+                        label: `${topInfo.title.slice(0, 2)}觉醒者`,
+                        mantra: topInfo.mantras[Math.floor(Math.random() * topInfo.mantras.length)],
+                        ritual: topInfo.rituals[Math.floor(Math.random() * topInfo.rituals.length)]
+                    });
+                    setStage('result');
+                }, 2800);
+            };
+
+            const RadarChart = ({ data, isPoster = false }) => {
+                const size = 260; 
+                const center = 130;
+                const radius = 80;
+                const keys = ["Safety", "Clarity", "Worth", "Abundance", "Flow", "Trust", "Identity", "Persistence"];
+                const labels = ["安全感", "清晰度", "配得感", "丰盛度", "顺应力", "信任感", "认同感", "持续力"];
+                const points = keys.map((key, i) => {
+                    const angle = (Math.PI * 2 * i) / keys.length - Math.PI / 2;
+                    const val = (data[key] || 0) / 6; 
+                    const r = radius * (0.35 + val * 0.65);
+                    return { x: center + r * Math.cos(angle), y: center + r * Math.sin(angle), lx: center + (radius + 32) * Math.cos(angle), ly: center + (radius + 32) * Math.sin(angle) };
+                });
+                const polygonPath = points.map(p => `${p.x},${p.y}`).join(" ");
+                return (
+                    <div className="flex justify-center items-center py-6 relative overflow-visible">
+                        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="overflow-visible">
+                            {[0.4, 0.7, 1].map((rMult, i) => (<circle key={i} cx={center} cy={center} r={radius * rMult} fill="none" stroke="rgba(197, 163, 145, 0.25)" strokeWidth="0.5" />))}
+                            <polygon points={polygonPath} fill="rgba(197, 163, 145, 0.2)" stroke="#C5A391" strokeWidth="1.5" strokeLinejoin="round" />
+                            {points.map((p, i) => (
+                                <g key={i}>
+                                    <circle cx={p.x} cy={p.y} r="3" fill="#C5A391" />
+                                    <text x={p.lx} y={p.ly} textAnchor="middle" dominantBaseline="middle" className="fill-[#3A3533] font-bold font-sans text-[12px] tracking-widest"> {labels[i]} </text>
+                                </g>
+                            ))}
+                        </svg>
+                    </div>
+                );
+            };
+
+            return (
+                <div className="min-h-screen w-full flex items-center justify-center font-sans overflow-x-hidden relative py-10 selection:bg-[#FDF8F7] text-[#2A2422]">
+                    
+                    <div className="fixed inset-0 bg-[#FFFDFB] z-[-1]">
+                        <div className="absolute top-[-5%] left-[-5%] w-[80%] h-[70%] bg-[#FDF8F7] rounded-full blur-[140px] opacity-90"></div>
+                        <div className="absolute bottom-[-10%] right-[-10%] w-[70%] h-[60%] bg-[#FEFBF9] rounded-full blur-[120px] opacity-70"></div>
+                        <div className="absolute top-[30%] left-[20%] w-[50%] h-[50%] bg-[#FDF8F7] rounded-full blur-[100px] opacity-60"></div>
+                        <div className="absolute top-[15%] left-[25%] w-1 h-1 bg-[#C5A391] rounded-full shadow-[0_0_15px_3px_#C5A391] opacity-30 animate-pulse"></div>
+                    </div>
+
+                    <style>{`
+                        .luxury-card {
+                            background: rgba(255, 255, 255, 0.85);
+                            backdrop-filter: blur(40px);
+                            border: 1px solid rgba(197, 163, 145, 0.15);
+                            box-shadow: 0 30px 90px rgba(197, 163, 145, 0.08);
+                            position: relative;
+                            padding: 3rem;
+                            border-radius: 4px;
+                        }
+                        .luxury-card-border::after {
+                            content: ''; position: absolute; inset: 8px; border: 0.5px solid #C5A391; border-radius: 2px; opacity: 0.3; pointer-events: none;
+                        }
+                        .luxury-card-border::before {
+                            content: ''; position: absolute; inset: 12px; border: 0.5px solid #C5A391; border-radius: 1px; opacity: 0.15; pointer-events: none;
+                        }
+                        .text-header { font-family: 'Times New Roman', serif; letter-spacing: 0.1em; text-transform: uppercase; }
+                        .tab-active { background: white; color: #2A2422; font-weight: 800; border: 1.5px solid #C5A391; box-shadow: 0 4px 20px rgba(197, 163, 145, 0.15); }
+                        .btn-minimal {
+                            background: white;
+                            border: 1px solid #C5A391;
+                            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+                            position: relative;
+                            overflow: hidden;
+                        }
+                        .btn-minimal:hover { background: #FFFDFB; transform: translateY(-2px); box-shadow: 0 15px 35px rgba(197, 163, 145, 0.15); }
+                        .option-bounce { transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); border-bottom: 1px solid rgba(197, 163, 145, 0.08); }
+                        @keyframes subtle-bounce { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(5px); } }
+                        .arrow-move { animation: subtle-bounce 1s infinite; }
+                        @keyframes mantra-glow { 0%, 100% { opacity: 0.95; } 50% { opacity: 1; text-shadow: 0 0 15px rgba(197, 163, 145, 0.3); } }
+                        .mantra-fade { animation: mantra-glow 4s ease-in-out infinite; }
+                        @keyframes float-up { 0% { transform: translateY(20px); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
+                        .animate-float-up { animation: float-up 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+                    `}</style>
+
+                    <div className="w-full max-w-lg px-8 relative z-10">
+                        
+                        {/* --- 封面页 --- */}
+                        {stage === 'cover' && (
+                            <div className="text-center space-y-20 min-h-[80vh] flex flex-col items-center justify-center animate-in fade-in duration-1000 text-center">
+                                <div className="relative">
+                                    <div className="absolute inset-0 bg-[#C5A391] blur-3xl opacity-15 rounded-full scale-150 animate-pulse"></div>
+                                    <Compass className="w-24 h-24 text-[#C5A391] mx-auto relative mb-4 opacity-90" strokeWidth={0.2} />
+                                </div>
+                                
+                                <div className="space-y-12 animate-float-up">
+                                     <div className="space-y-4">
+                                         <h1 className="text-5xl font-light tracking-[0.4em] text-[#2A2422] pl-4 text-center">潜意识重逢</h1>
+                                         <p className="text-[#6C5E5A] font-bold tracking-[0.8em] text-[11px] uppercase text-center">The Cosmic Reunion Protocol</p>
+                                     </div>
+
+                                     <div className="w-12 h-[0.5px] bg-[#C5A391] opacity-40 mx-auto"></div>
+
+                                     <div className="space-y-6 px-6">
+                                         <div className="relative p-8 bg-white/50 rounded-2xl border-2 border-[#C5A391]/30 backdrop-blur-md shadow-2xl overflow-hidden text-center">
+                                             <div className="space-y-5 relative z-10">
+                                                 <p className="text-[#3A3533] text-[16px] leading-relaxed tracking-[0.12em] font-bold text-center">
+                                                     基于潜意识投射心理学<br/>
+                                                     通过30组深度能量交互<br/>
+                                                     探索显化频率卡点
+                                                 </p>
+                                                 <p className="text-[#C5A391] font-black tracking-[0.4em] text-[14px] uppercase border-t border-[#C5A391]/15 pt-5 text-center">
+                                                     获得专属你的显化小工具
+                                                 </p>
+                                             </div>
+                                         </div>
+                                     </div>
+                                </div>
+
+                                <button onClick={handleStart} className="btn-minimal group px-16 py-5 text-[#2A2422] font-black text-[15px] tracking-[0.5em] uppercase shadow-xl active:scale-95 flex items-center justify-center gap-4 animate-float-up delay-700">
+                                    开启之旅 <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-2" />
+                                </button>
+                            </div>
+                        )}
+
+                        {/* --- 引导页 --- */}
+                        {stage === 'landing' && (
+                            <div className="text-center space-y-16 animate-in fade-in slide-in-from-bottom duration-1000">
+                                <div className="space-y-6 text-center">
+                                     <Compass className="w-16 h-16 text-[#C5A391] mx-auto opacity-90" strokeWidth={0.5} />
+                                     <h1 className="text-4xl font-light tracking-[0.25em] text-[#2A2422] text-center">时空引导</h1>
+                                </div>
+                                
+                                <div className="luxury-card luxury-card-border p-12 text-center space-y-10 shadow-2xl">
+                                     <p className="leading-relaxed text-[19px] font-bold italic text-[#3A3533] text-center">
+                                        并非无法显化成功，只是另一部分的你，还在潜意识的深处等待与你重逢。
+                                     </p>
+                                     <div className="w-20 h-[1.5px] bg-[#C5A391] opacity-40 mx-auto"></div>
+                                     <p className="text-[14px] leading-relaxed font-black tracking-[0.5em] uppercase text-[#6C5E5A] text-center">
+                                        开启指引重逢的灵魂地图
+                                     </p>
+                                </div>
+
+                                <button onClick={handleToTest} className="btn-minimal group w-full py-6 text-[#2A2422] font-black text-[16px] tracking-[0.5em] uppercase shadow-2xl active:scale-95 flex items-center justify-center gap-3">
+                                    开始重逢测试
+                                    <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-2" />
+                                </button>
+                            </div>
+                        )}
+
+                        {/* --- 里程碑 --- */}
+                        {stage === 'milestone' && (
+                            <div className="text-center space-y-12 animate-in fade-in duration-1000 px-4">
+                                <div className="space-y-4 text-center">
+                                     {currentQuestion === 9 ? <Waves className="w-14 h-14 text-[#C5A391] mx-auto opacity-80" /> : <Mountain className="w-14 h-14 text-[#C5A391] mx-auto opacity-80" />}
+                                     <h2 className="text-2xl font-bold tracking-[0.4em] text-[#2A2422] uppercase text-center">
+                                         {currentQuestion === 9 ? "意识连接成功" : "深度对话开启"}
+                                     </h2>
+                                </div>
+                                <div className="luxury-card luxury-card-border p-10 text-[#2A2422] text-[18px] font-bold leading-relaxed italic text-left">
+                                    {currentQuestion === 9 
+                                        ? "你已经剥离了浅层的表象，信号正在增强。这种“疏通”感，你察觉到了吗？" 
+                                        : "所有的地图碎片正在靠拢。最后一段路，我们将直抵核心，迎接那个圆满的自己。"}
+                                </div>
+                                <button onClick={nextAfterMilestone} className="btn-minimal w-full py-5 text-[#2A2422] font-black tracking-[0.5em] uppercase flex items-center justify-center gap-2 group shadow-xl">
+                                     开启下一幕
+                                     <ChevronRight className="w-4 h-4 group-hover:translate-x-1" />
+                                </button>
+                            </div>
+                        )}
+
+                        {/* --- 测试页 --- 已整理：衬线体、拉开间距、不再紧凑 --- */}
+                        {stage === 'testing' && (
+                            <div className="animate-in slide-in-from-right duration-700 space-y-12">
+                                <div className="flex flex-col items-center gap-4">
+                                    <div className="flex flex-col items-center gap-2 text-center">
+                                        <span className="text-[13px] font-black tracking-[0.4em] uppercase text-[#6C5E5A]">
+                                             {currentQuestion < 10 ? "第一幕：初见 · 剥离" : currentQuestion < 20 ? "第二幕：潜入 · 对话" : "第三幕：重逢 · 核心的觉醒"}
+                                        </span>
+                                        <span className="text-[11px] tracking-[0.6em] uppercase font-bold text-[#C5A391]">阶段 {currentQuestion + 1} / 30</span>
+                                    </div>
+                                    <div className="w-40 h-[2px] bg-[#FDF8F7] rounded-full">
+                                        <div className="h-full bg-[#C5A391] rounded-full transition-all duration-700 shadow-[0_0_12px_#C5A391]" style={{ width: `${((currentQuestion + 1) / questions.length) * 100}%` }}></div>
+                                    </div>
+                                </div>
+                                
+                                <div className="luxury-card p-10 min-h-[460px] flex flex-col justify-center space-y-14 shadow-2xl">
+                                    {/* 您喜欢的衬线体风格 + 宽字距 + 通透行高 */}
+                                    <h2 className="text-2xl sm:text-3xl font-medium leading-[1.8] tracking-widest text-left text-[#2A2422] mx-auto w-full font-serif text-center sm:text-left">
+                                        {questions[currentQuestion].text}
+                                    </h2>
+                                    <div className="space-y-4 text-left">
+                                        {questions[currentQuestion].options.map((opt, idx) => (
+                                            <button key={idx} onClick={() => handleAnswer(opt.v)} className="option-bounce w-full py-6 px-7 text-left flex items-center justify-between group transition-all rounded-lg">
+                                                <span className="text-[17px] font-medium tracking-widest text-[#4A3F3B] group-hover:text-black transition-colors">{opt.t}</span>
+                                                <ArrowRight className="w-5 h-5 opacity-0 group-hover:opacity-100 transition-all text-[#C5A391] arrow-move" />
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {stage === 'calculating' && (
+                            <div className="text-center space-y-12 py-20 animate-pulse">
+                                <RefreshCw className="w-14 h-14 text-[#C5A391] mx-auto opacity-70 animate-spin" style={{ animationDuration: '6s' }} />
+                                <div className="space-y-4 text-center">
+                                    <h3 className="text-2xl font-black tracking-[0.6em] text-[#6C5E5A] uppercase text-center">时空频率校准中</h3>
+                                    <p className="text-[#2A2422] text-[18px] tracking-[0.2em] font-black text-center">正在链接你的潜意识能量场...</p>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* --- 结果页 --- 已整理：身份单行、肯定语纤细、无掉字 --- */}
+                        {stage === 'result' && (
+                            <div className="animate-in fade-in slide-in-from-bottom duration-1000 space-y-12 pb-24 px-2 text-center">
+                                <div className="flex bg-white/60 p-2.5 border-2 border-[#C5A391]/25 backdrop-blur-xl rounded-2xl shadow-sm">
+                                     <button onClick={() => setActiveTab('archetype')} className={`flex-1 py-4 text-[16px] tracking-[0.4em] uppercase transition-all rounded-xl ${activeTab === 'archetype' ? 'tab-active' : 'text-[#7A6F6C] font-black opacity-40'}`}>显化天赋</button>
+                                     <button onClick={() => setActiveTab('analysis')} className={`flex-1 py-4 text-[16px] tracking-[0.4em] uppercase transition-all rounded-xl ${activeTab === 'analysis' ? 'tab-active' : 'text-[#7A6F6C] font-black opacity-40'}`}>深度解析</button>
+                                </div>
+
+                                {activeTab === 'archetype' ? (
+                                    <div className="space-y-12 animate-in fade-in slide-in-from-left duration-700 px-1">
+                                        <div className="luxury-card luxury-card-border p-12 text-center space-y-14 min-h-[600px] flex flex-col items-center justify-center shadow-3xl">
+                                            <div className="space-y-5 w-full">
+                                                <p className="text-[#4A3F3B] text-[16px] font-medium tracking-[0.8em] uppercase text-center">身份画像</p>
+                                                {/* 身份画像：一行显示，纤细高定 */}
+                                                <h2 className="text-xl sm:text-2xl font-light tracking-[0.1em] text-[#2A2422] uppercase text-header w-full text-center leading-normal whitespace-nowrap overflow-visible">
+                                                    {result.personaName}
+                                                </h2>
+                                                <p className="text-[#C5A391] text-[15px] font-bold tracking-[0.4em] uppercase text-center">核心天赋：{result.potentialTitle}</p>
+                                            </div>
+
+                                            <RadarChart data={scores} />
+                                            
+                                            <div className="space-y-8 pt-8 border-t-2 border-[#C5A391]/15 w-full px-4 text-center">
+                                                <p className="text-[21px] text-[#2A2422] font-semibold italic leading-relaxed tracking-wider font-serif text-center">
+                                                    “ {result.personaQuote} ”
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-6">
+                                            <button onClick={() => setStage('poster')} className="py-7 border-2 border-[#C5A391] text-[#2A2422] font-black text-[15px] tracking-[0.5em] uppercase flex items-center justify-center gap-3 hover:bg-white transition-all active:scale-95 shadow-xl">
+                                                 <Download className="w-5 h-5 text-[#C5A391]" strokeWidth={2.5} /> 保存画卷
+                                            </button>
+                                            <button onClick={resetTest} className="py-7 bg-[#C5A391] text-white font-black text-[15px] tracking-[0.5em] uppercase flex items-center justify-center gap-3 shadow-2xl active:scale-95">
+                                                 <RefreshCw className="w-5 h-5" strokeWidth={3} /> 再测一次
+                                            </button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-10 animate-in fade-in slide-in-from-right duration-700 px-1">
+                                        <div className="luxury-card p-10 space-y-14 shadow-2xl overflow-hidden">
+                                            <div className="space-y-4 text-center w-full">
+                                                <MessageCircleHeart className="w-14 h-14 text-[#C5A391] mx-auto opacity-100 mb-4" strokeWidth={0.5} />
+                                                <h2 className="text-xl sm:text-2xl font-light tracking-[0.1em] text-[#2A2422] uppercase w-full text-center leading-normal whitespace-nowrap overflow-visible">{result.clearingTitle}</h2>
+                                                <div className="text-[#4A3F3B] text-[15px] font-medium tracking-[0.6em] uppercase text-center">深度卡点分析</div>
+                                            </div>
+
+                                            <div className="space-y-10 text-[#2A2422] border-t-2 border-b-2 border-[#C5A391]/15 py-14 px-6 text-center bg-[#FDF8F7]/40 rounded-sm">
+                                                <div className="flex items-center justify-center gap-5">
+                                                     <div className="h-[1px] w-14 bg-[#C5A391] opacity-50"></div>
+                                                     <span className="text-[15px] font-bold tracking-[0.5em] uppercase text-[#4A3F3B] text-center">宇宙回响</span>
+                                                     <div className="h-[1px] w-14 bg-[#C5A391] opacity-50"></div>
+                                                </div>
+                                                <p className="text-[18px] leading-[2.4] font-normal text-left indent-10 italic tracking-widest text-[#3A3533]">
+                                                     {result.cosmicEcho}
+                                                </p>
+                                            </div>
+
+                                            <div className="space-y-6 pt-4 text-center px-4 text-[#C5A391]">
+                                                <p className="text-[16px] font-bold uppercase tracking-[0.5em] text-center">显化肯定语</p>
+                                                {/* 肯定语：20px，纤细排版，不掉字 */}
+                                                <p className="text-[20px] text-[#2A2422] font-serif font-light italic px-4 leading-[1.8] mantra-fade break-words mx-auto w-full text-center">“ {result.mantra} ”</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="luxury-card luxury-card-border p-12 space-y-16 shadow-3xl border-l-[10px] border-l-[#C5A391]">
+                                            <div className="flex items-center gap-7 border-b-2 border-[#C5A391]/10 pb-10">
+                                                <Zap className="w-10 h-10 text-[#C5A391]" strokeWidth={1.5} />
+                                                <h3 className="text-2xl font-light tracking-[0.3em] text-[#2A2422] uppercase text-center sm:text-left">能量池疏通指南</h3>
+                                            </div>
+                                            <div className="space-y-16">
+                                                <div className="space-y-8 text-left">
+                                                    <p className="text-[18px] text-[#4A3F3B] font-medium uppercase tracking-[0.6em] text-left">重逢仪式</p>
+                                                    {/* 已整理：不再与显化工具重复 */}
+                                                    <p className="text-[#2A2422] text-[18px] leading-[1.8] font-normal italic bg-white p-10 border-2 border-[#C5A391]/10 rounded-2xl shadow-inner text-left tracking-widest">
+                                                        {result.ritual}
+                                                    </p>
+                                                </div>
+                                                <div className="space-y-8 pt-8 border-t-2 border-[#C5A391]/10">
+                                                    <p className="text-[18px] text-[#4A3F3B] font-medium uppercase tracking-[0.6em] text-left">显化工具</p>
+                                                    <div className="space-y-6 text-center sm:text-left px-2">
+                                                        <p className="text-[#2A2422] text-[26px] font-light tracking-widest text-center sm:text-left">{result.toolName}</p>
+                                                        <p className="text-[#3A3533] text-[18px] leading-relaxed font-normal tracking-widest text-center sm:text-left">{result.toolUsage}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div className="text-center pt-24 pb-12">
+                                    <p className="text-[#2A2422] text-[14px] tracking-[1em] uppercase font-light opacity-80 pl-4 text-center"> 潜意识重逢实验室 </p>
+                                    <p className="text-[#C5A391] text-[15px] tracking-[0.6em] uppercase mt-5 font-black text-center"> 设计出品 @千太 </p>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* --- 海报页 --- 已整理：无二维码、单行标题、宽距题干质感 --- */}
+                        {stage === 'poster' && (
+                            <div className="animate-in fade-in zoom-in duration-1000 space-y-8 pb-20 px-1 text-center">
+                                <div className="flex justify-end">
+                                     <button onClick={() => setStage('result')} className="p-5 border-2 border-[#C5A391]/50 rounded-full bg-white active:scale-90 transition-all shadow-2xl">
+                                         <X className="w-7 h-7 text-[#2A2422]" strokeWidth={2.5} />
+                                     </button>
+                                </div>
+                                
+                                <div className="luxury-card rounded-none overflow-hidden shadow-4xl relative px-6 py-16 sm:px-12 space-y-12 min-h-[88vh] flex flex-col items-center bg-white border-[8px] border-[#FDF8F7]">
+                                     <div className="absolute inset-5 border-[1px] border-[#C5A391]/40 pointer-events-none"></div>
+                                     <div className="absolute inset-8 border-[0.5px] border-[#C5A391]/20 pointer-events-none"></div>
+
+                                     <div className="text-center space-y-5 relative z-10 mt-6 w-full text-center">
+                                        <Compass className="w-16 h-16 text-[#C5A391] mx-auto mb-4 opacity-100" strokeWidth={0.5} />
+                                        <h1 className="text-3xl font-light tracking-[0.6em] text-[#2A2422] uppercase text-center">潜在显化频率画卷</h1>
+                                        <p className="text-[16px] text-[#2A2422] font-normal uppercase tracking-[0.5em] text-center">天赋象限分析报告</p>
+                                     </div>
+
+                                     <div className="relative z-10 w-full flex justify-center transform scale-[0.92] my-[-15px]">
+                                        <RadarChart data={scores} isPoster={true} />
+                                     </div>
+
+                                     <div className="w-full relative z-10 space-y-10 text-center px-4">
+                                        <div className="space-y-4 w-full text-center">
+                                            <p className="text-[15px] font-normal tracking-[0.8em] uppercase text-[#7A6F6C] text-center">灵魂身份画像</p>
+                                            {/* 身份画像海报端一行显示 */}
+                                            <h2 className="text-xl sm:text-2xl font-light tracking-[0.1em] text-[#2A2422] uppercase whitespace-nowrap px-2 w-full text-center border-b-2 border-[#C5A391]/20 pb-6 mx-auto overflow-visible">
+                                                {result.personaName}
+                                            </h2>
+                                        </div>
+
+                                        <div className="py-12 px-2 text-center">
+                                            <p className="text-[18px] sm:text-[20px] text-[#2A2422] font-normal italic leading-relaxed tracking-wider font-serif break-words max-w-[320px] mx-auto text-center">
+                                                “ {result.personaQuote} ”
+                                            </p>
+                                        </div>
+
+                                        <div className="space-y-5 pb-8 text-center text-center">
+                                            <p className="text-[14px] uppercase tracking-[0.5em] font-normal text-[#C5A391] text-center">核心频率肯定语</p>
+                                            <p className="text-[20px] sm:text-[24px] text-[#2A2422] font-serif font-light italic px-4 leading-relaxed mantra-fade break-words mx-auto w-full text-center">“ {result.mantra} ”</p>
+                                        </div>
+                                     </div>
+
+                                     <div className="mt-auto w-full flex flex-col items-center gap-12 relative z-10 pt-14 border-t-2 border-[#FDF8F7]">
+                                        <div className="flex flex-col items-center justify-center w-full px-6 mb-6 text-center text-center">
+                                            <p className="text-[#3A3533] text-[15px] font-normal leading-relaxed tracking-[0.1em] break-words mb-6 w-full text-center">
+                                                 寻到的天赋，就是重逢后圆满的自己。<br/>
+                                                 开启属于你的显化主导权。
+                                            </p>
+                                            <p className="text-[13px] tracking-[0.8em] uppercase font-bold text-[#C5A391] text-center">设计出品 @千太</p>
+                                        </div>
+                                     </div>
+                                </div>
+
+                                <p className="text-center text-[#7A6F6C] text-[14px] font-bold pb-12 tracking-[0.5em] animate-pulse italic uppercase text-center">长按或截图保存你的显化蓝图</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
