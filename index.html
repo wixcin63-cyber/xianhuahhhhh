@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>新传人格测试</title>
+  
+  <!-- Global Error Handler for Debugging -->
+  <script>
+    window.onerror = function(message, source, lineno, colno, error) {
+      console.error("Global Error:", message, error);
+      const errorDiv = document.getElementById('error-display') || document.createElement('div');
+      errorDiv.id = 'error-display';
+      errorDiv.style.position = 'fixed';
+      errorDiv.style.top = '0';
+      errorDiv.style.left = '0';
+      errorDiv.style.width = '100%';
+      errorDiv.style.backgroundColor = '#ffebee';
+      errorDiv.style.color = '#c62828';
+      errorDiv.style.padding = '20px';
+      errorDiv.style.zIndex = '9999';
+      errorDiv.style.borderBottom = '1px solid #ef9a9a';
+      errorDiv.style.fontFamily = 'monospace';
+      errorDiv.innerHTML = `<strong>Error:</strong> ${message}<br><small>${source}:${lineno}</small>`;
+      document.body.prepend(errorDiv);
+    };
+  </script>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Import Maps for Module Loading -->
+  <script type="importmap">
+    {
+      "imports": {
+        "react": "https://esm.sh/react@18.2.0?dev",
+        "react-dom/client": "https://esm.sh/react-dom@18.2.0/client?dev",
+        "lucide-react": "https://esm.sh/lucide-react@0.344.0?dev&external=react,react-dom",
+        "framer-motion": "https://esm.sh/framer-motion@10.18.0?dev&external=react,react-dom"
+      }
+    }
+  </script>
+  
+  <!-- Babel for JSX Transformation (Fixed Version) -->
+  <script src="https://unpkg.com/@babel/standalone@7.23.5/babel.min.js"></script>
+  
+  <style>
+    body {
+      font-family: serif;
+      background-color: #F8F8F8;
+    }
+    /* Loading spinner animation */
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    .animate-spin {
+      animation: spin 1s linear infinite;
+    }
+  </style>
+</head>
+<body>
+  <div id="root">
+    <div style="display: flex; justify-content: center; align-items: center; height: 100vh; color: #666;">
+      Loading application...
+    </div>
+  </div>
+
+  <script type="text/babel" data-type="module" data-presets="react">
+    import React, { useState, useEffect, useRef } from 'react';
+    import { createRoot } from 'react-dom/client';
+    import { 
+      RefreshCw, ChevronRight, ChevronLeft, Quote, 
+      Compass, Shield, Layers, Radio, Tag, MessageSquare, Book, Download, BookOpen
+    } from 'lucide-react';
+    import { motion, AnimatePresence } from 'framer-motion';
+
+    // --- 动态加载截图组件 ---
+    const loadHtml2Canvas = () => {
+      return new Promise((resolve) => {
+        if (window.html2canvas) return resolve(true);
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+        script.onload = () => resolve(true);
+        script.onerror = () => console.error("Failed to load html2canvas");
+        document.head.appendChild(script);
+      });
+    };
+
+    // --- 核心人格数据 (包含书名及深度解读) ---
+    const PERSONAS = {
+      scavenger: { 
+        title: "深海的打捞者", eng: "The Scavenger", 
+        quote: "在信息的荒原里，真相从未消失，它只是在等待一次温柔的打捞。", 
+        source: "灵感源自 沃尔特·本雅明 《拱廊街计划》", 
+        traits: ["深度报道", "特稿魂", "事实对齐"], 
+        description: "你对事实有着近乎偏执的忠诚。在碎片化叙事的时代，你拒绝被表象吞噬，始终愿意沉入深处，寻找带有体温的真实。你相信，最深刻的意义往往藏在最容易被忽略的废墟之中。", 
+        stats: { 深度: 95, 共情: 80, 敏锐: 85, 坚守: 90 }, 
+        icon: <Compass className="w-12 h-12" /> 
+      },
+      watchman: { 
+        title: "秩序的守夜人", eng: "The Night’s Watch", 
+        quote: "当噪音吞噬信号，你的发声，是在为这个时代的底线守夜。", 
+        source: "灵感源自 尼尔·波兹曼 《娱乐至死》", 
+        traits: ["事实核查", "把关人", "伦理卫士"], 
+        description: "你是严谨、克制且清醒的把关人。在狂欢的洪流中，你深知权力的边界与伦理的脆弱，你的沉默与发声同样有力，是你构筑了信息世界的最后一道防火墙。", 
+        stats: { 深度: 85, 共情: 60, 敏锐: 90, 坚守: 98 }, 
+        icon: <Shield className="w-12 h-12" /> 
+      },
+      deconstructor: { 
+        title: "拟象的解构家", eng: "The Deconstructor", 
+        quote: "不被定义的定义，才是最深刻的定义。你拒绝被规训，因为你本身就是媒介。", 
+        source: "灵感源自 让·鲍德里亚 《拟象与仿真》", 
+        traits: ["理论研究", "批判思维", "学术种子"], 
+        description: "你看穿了景观社会的重重伪装。对你而言，所有的主流叙事都值得被二次拆解。你活在定义的缝隙中，用批判的眼光审视着这个被符号填充的世界。", 
+        stats: { 深度: 92, 共情: 55, 敏锐: 95, 坚守: 85 }, 
+        icon: <Layers className="w-12 h-12" /> 
+      },
+      tuner: { 
+        title: "情绪的调音师", eng: "The Tuner", 
+        quote: "所谓的流量，不过是千万种孤独在此刻达成了共鸣。", 
+        source: "灵感源自 马歇尔·麦克卢汉 《理解媒介》", 
+        traits: ["新媒体运营", "社群专家", "情感洞察"], 
+        description: "你拥有极高的共情天赋，能精准地捕捉群体情绪中最微小的震颤。你擅长在大众的孤独中寻找公约数，将冰冷的信息调频为能触动灵魂的共振。", 
+        stats: { 深度: 75, 共情: 98, 敏锐: 92, 坚守: 70 }, 
+        icon: <Radio className="w-12 h-12" /> 
+      },
+      architect: { 
+        title: "媒介的构建师", eng: "The Architect", 
+        quote: "眼前的平庸只是尚未对齐的图景，你的笔触正通往一个未被命名的新世界。", 
+        source: "灵感源自 亨利·列斐伏尔 《空间的生产》", 
+        traits: ["创意策划", "文案大师", "内容产品"], 
+        description: "你不满足于记录，你更渴望创造。你在叙事的废墟之上构建新的表达空间，你的每一个创意、每一段逻辑，都是在为未来的传播生态绘制宏大的蓝图。", 
+        stats: { 深度: 80, 共情: 85, 敏锐: 88, 坚守: 75 }, 
+        icon: <Book className="w-12 h-12" /> 
+      },
+      translator: { 
+        title: "符号的转译者", eng: "The Translator", 
+        quote: "在这个语言崩塌的世界，你负责将冰冷的符号，转译成人类的温度。", 
+        source: "灵感源自 罗兰·巴特 《神话辞章》", 
+        traits: ["视频博主", "科普作者", "跨文化传播"], 
+        description: "你是跨越界限的使者。你深知理论的晦涩与大众的隔膜，于是你行走其间，用灵动的媒介语言赋予抽象意义以具体的灵魂，让理解不再跨越鸿沟。", 
+        stats: { 深度: 78, 共情: 90, 敏锐: 85, 坚守: 80 }, 
+        icon: <MessageSquare className="w-12 h-12" /> 
+      }
+    };
+
+    // --- 全部题目数据 (30题垂直布局) ---
+    const QUESTIONS = [
+      { id: 1, chapter: "第一篇章：感知的信噪比", text: "身处海量冗余的信息流中，你最先捕捉到的是？", a: "结构性的裂痕（深层逻辑）", b: "情感的溢出点（大众情绪）", weights: { a: ['deconstructor', 'watchman'], b: ['tuner', 'scavenger'] } },
+      { id: 2, chapter: "第一篇章：感知的信噪比", text: "面对一个“反转”不断的事件，你的本能反应是？", a: "拒绝站队，等待证据链的闭环", b: "观察多方话语权力的博弈过程", weights: { a: ['watchman', 'scavenger'], b: ['deconstructor', 'tuner'] } },
+      { id: 3, chapter: "第一篇章：感知的信噪比", text: "你如何定义那些被算法屏蔽的细微声音？", a: "传播系统中的“残差”", b: "亟待打捞的“真实样本”", weights: { a: ['deconstructor', 'watchman'], b: ['scavenger', 'tuner'] } },
+      { id: 4, chapter: "第一篇章：感知的信噪比", text: "当一个词汇演变成全网热梗，你感受到的是？", a: "语言的生命力在流动", b: "符号的自我解构与意义坍塌", weights: { a: ['tuner', 'translator'], b: ['deconstructor', 'watchman'] } },
+      { id: 5, chapter: "第一篇章：感知的信噪比", text: "在混乱的现场，你更倾向于记录？", a: "具体的、带有体温的特写", b: "宏大的背景剪影", weights: { a: ['scavenger', 'tuner'], b: ['architect', 'watchman'] } },
+      { id: 6, chapter: "第一篇章：感知的信噪比", text: "当你发现一个选题已被过度消费，你会？", a: "寻找无人踏足的偏僻切口", b: "试图重新阐释其常态化的意义", weights: { a: ['scavenger', 'deconstructor'], b: ['tuner', 'translator'] } },
+      { id: 7, chapter: "第一篇章：感知的信噪比", text: "你认为“事实”与“真相”的关系更接近？", a: "拼图与原画（需要收集）", b: "海面与冰山（需要挖掘）", weights: { a: ['watchman', 'translator'], b: ['scavenger', 'deconstructor'] } },
+      { id: 8, chapter: "第一篇章：感知的信噪比", text: "在社交平台，你更像是一个？", a: "静默的潜水员（深度观察）", b: "积极的策展人（内容分发）", weights: { a: ['deconstructor', 'watchman'], b: ['tuner', 'scavenger'] } },
+      { id: 9, chapter: "第二篇章：叙事的西绪福斯", text: "面对被要求不断“对齐”而失去灵气的稿件，你觉得？", a: "表达的主体性正在被工业化消解", b: "这是寻找传播公约数的必然妥协", weights: { a: ['architect', 'deconstructor'], b: ['translator', 'tuner'] } },
+      { id: 10, chapter: "第二篇章：叙事的西绪福斯", text: "当你为了传播不得不使用“标题党”式话语，你会？", a: "感到一种职业性的“道德阵痛”", b: "将其视为一种必要的传播杠杆", weights: { a: ['watchman', 'scavenger'], b: ['tuner', 'architect'] } },
+      { id: 11, chapter: "第二篇章：叙事的西绪福斯", text: "剪辑视频时，那个不断闪烁的切点意味着？", a: "你对真实时间进行重组的权力感", b: "碎片化叙事下逻辑的无力感", weights: { a: ['architect', 'translator'], b: ['deconstructor', 'watchman'] } },
+      { id: 12, chapter: "第二篇章：叙事的西绪福斯", text: "面对深夜电脑屏幕的空白光亮，你认为那是？", a: "自由表达的真空期", b: "被迫产出的焦虑源", weights: { a: ['architect', 'scavenger'], b: ['watchman', 'tuner'] } },
+      { id: 13, chapter: "第二篇章：叙事的西绪福斯", text: "如果世界正在变成“娱乐至死”的景观，你会？", a: "逆流而上，做深刻的少数派", b: "顺流而下，在娱乐中置入严肃", weights: { a: ['deconstructor', 'watchman'], b: ['tuner', 'translator'] } },
+      { id: 14, chapter: "第二篇章：叙事的西绪福斯", text: "你认为文字的尽头，是图像的起点吗？", a: "是的，感官需要更直观的震慑", b: "不，文字保留了想象最后的尊严", weights: { a: ['translator', 'tuner'], b: ['scavenger', 'watchman'] } },
+      { id: 15, chapter: "第二篇章：叙事的西绪福斯", text: "当你的表达完全不被受众理解，你的感受是？", a: "寻找知音的孤独感", b: "审视自我逻辑是否有误的怀疑", weights: { a: ['scavenger', 'tuner'], b: ['deconstructor', 'watchman'] } },
+      { id: 16, chapter: "第三篇章：权力的拟象间隙", text: "面对流量的极度诱惑，你是否感到过一种“灵魂的磨损”？", a: "经常，觉得自我价值在缩水", b: "很少，这只是职业博弈的一部分", weights: { a: ['watchman', 'scavenger'], b: ['tuner', 'architect'] } },
+      { id: 17, chapter: "第三篇章：权力的拟象间隙", text: "你如何看待媒介对人的“异化”？", a: "技术正在重塑我们的感知模式", b: "人类始终是媒介的主人", weights: { a: ['deconstructor', 'scavenger'], b: ['architect', 'tuner'] } },
+      { id: 18, chapter: "第三篇章：权力的拟象间隙", text: "当你拥有删除一条“不雅评论”的权力，你觉得自己是？", a: "社区环境的净化者", b: "言论自由的裁决者", weights: { a: ['watchman', 'tuner'], b: ['deconstructor', 'scavenger'] } },
+      { id: 19, chapter: "第三篇章：权力的拟象间隙", text: "面对人工智能生成的文字，你感受到了？", a: "创造力的退化", b: "人的主体性的觉醒", weights: { a: ['watchman'], b: ['architect'] } },
+      { id: 20, chapter: "第三篇章：权力的拟象间隙", text: "你认为“滤镜”之于短视频，本质上是？", a: "一种对丑陋现实的必要修辞", b: "一场集体性的虚假拟象构建", weights: { a: ['tuner', 'translator'], b: ['deconstructor', 'watchman'] } },
+      { id: 21, chapter: "第三篇章：权力的拟象间隙", text: "看到弱者的苦难被当作“流量密码”，你的首要动作是？", a: "撰文批判其伦理缺失", b: "分析背后的推手逻辑", weights: { a: ['watchman', 'scavenger'], b: ['deconstructor', 'tuner'] } },
+      { id: 22, chapter: "第三篇章：权力的拟象间隙", text: "你是否相信，未来的传播将不再需要“把关人”？", a: "算法将彻底取代人工把关", b: "人类伦理底线是最后一道防线", weights: { a: ['architect', 'tuner'], b: ['watchman', 'scavenger'] } },
+      { id: 23, chapter: "第四篇章：最终的共振频率", text: "提到“新闻理想”，你脑海中浮现的第一个画面是？", a: "调查报道中那盏深夜的灯火", b: "爆款文章后台跳动的即时数字", weights: { a: ['watchman', 'scavenger'], b: ['tuner', 'architect'] } },
+      { id: 24, chapter: "第四篇章：最终的共振频率", text: "你认为新传生在这个时代的使命是？", a: "消除偏见与隔阂", b: "记录时代的震颤", weights: { a: ['translator', 'tuner'], b: ['scavenger', 'watchman'] } },
+      { id: 25, chapter: "第四篇章：最终的共振频率", text: "考研/求职的压力，让你觉得像是在？", a: "体系内的自我规训过程", b: "通往职业圣殿的必要洗礼", weights: { a: ['deconstructor', 'watchman'], b: ['scavenger', 'architect'] } },
+      { id: 26, chapter: "第四篇章：最终的共振频率", text: "如果可以与一位传播大师对话，你最想问？", a: "“真相是否真的存在？”", b: "“我们该如何被看见？”", weights: { a: ['scavenger', 'deconstructor'], b: ['tuner', 'translator'] } },
+      { id: 27, chapter: "第四篇章：最终的共振频率", text: "当你的专业被大众误解时，你的第一反应是？", a: "沉默并用作品自证", b: "积极地进行科普对话", weights: { a: ['watchman', 'scavenger'], b: ['translator', 'tuner'] } },
+      { id: 28, chapter: "第四篇章：最终的共振频率", text: "你更希望被后人如何评价？", a: "“他/她记录了时代”", b: "“他/她唤醒了人心”", weights: { a: ['scavenger'], b: ['translator'] } },
+      { id: 29, chapter: "第四篇章：最终的共振频率", text: "如果媒介是感官的延伸，你希望自己能延伸至？", a: "他人未曾触及的思想深处", b: "广袤无垠的大众情感边界", weights: { a: ['deconstructor', 'watchman'], b: ['tuner', 'translator'] } },
+      { id: 30, chapter: "第四篇章：最终的共振频率", text: "探索结束，当你按下提交键，你认为这代表？", a: "一次关于自我的“文本分析”", b: "寻找同行者的“信号发射”", weights: { a: ['deconstructor', 'watchman'], b: ['tuner', 'translator'] } },
+    ];
+
+    const App = () => {
+      const [screen, setScreen] = useState('welcome'); // welcome, quiz, analyzing, result
+      const [currentIdx, setCurrentIdx] = useState(0);
+      const [answers, setAnswers] = useState({});
+      const [result, setResult] = useState(null);
+      const posterRef = useRef(null);
+
+      useEffect(() => { loadHtml2Canvas(); }, []);
+
+      const handleAnswer = (choice) => {
+        const newAnswers = { ...answers, [QUESTIONS[currentIdx].id]: choice };
+        setAnswers(newAnswers);
+        if (currentIdx < QUESTIONS.length - 1) {
+          setCurrentIdx(currentIdx + 1);
+        } else {
+          setScreen('analyzing');
+          setTimeout(() => {
+            const scores = { scavenger: 0, watchman: 0, deconstructor: 0, tuner: 0, architect: 0, translator: 0 };
+            Object.keys(newAnswers).forEach(id => {
+              const q = QUESTIONS.find(item => item.id === parseInt(id));
+              q.weights[newAnswers[id]].forEach(p => scores[p]++);
+            });
+            const winner = Object.keys(scores).reduce((a, b) => scores[a] > scores[b] ? a : b);
+            setResult(PERSONAS[winner]);
+            setScreen('result');
+          }, 2500);
+        }
+      };
+
+      const savePoster = async () => {
+        if (!window.html2canvas) return;
+        try {
+            const canvas = await window.html2canvas(posterRef.current, { 
+              scale: 3, 
+              useCORS: true, 
+              backgroundColor: '#FFFFFF',
+              windowWidth: 600
+            });
+            const link = document.createElement("a");
+            link.href = canvas.toDataURL("image/png");
+            link.download = `Resonance_Discovery_${result.eng}.png`;
+            link.click();
+        } catch (e) {
+            console.error("Poster generation failed:", e);
+            alert("海报生成失败，请重试");
+        }
+      };
+
+      const reset = () => { setScreen('welcome'); setCurrentIdx(0); setAnswers({}); };
+
+      // --- 欢迎页理论抽象动画 ---
+      const TheoryAnimation = () => (
+        <div className="absolute inset-0 pointer-events-none opacity-[0.06] overflow-hidden">
+          <svg width="100%" height="100%" viewBox="0 0 400 600" preserveAspectRatio="xMidYMid slice">
+            <motion.path
+              initial={{ pathLength: 0 }}
+              animate={{ pathLength: 1 }}
+              transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
+              d="M 350,100 C 200,100 100,200 100,350 C 100,450 180,520 280,520 C 350,520 400,470 400,400"
+              fill="none" stroke="black" strokeWidth="0.5"
+            />
+            <motion.g animate={{ opacity: [0.2, 0.8, 0.2] }} transition={{ duration: 4, repeat: Infinity }}>
+              {[...Array(8)].map((_, i) => (
+                <line key={i} x1="200" y1="300" x2={200 + Math.cos(i * 45) * 400} y2={300 + Math.sin(i * 45) * 400} stroke="black" strokeWidth="0.3" strokeDasharray="5 5" />
+              ))}
+              <circle cx="200" cy="300" r="50" fill="none" stroke="black" strokeWidth="0.5" />
+            </motion.g>
+            <motion.path
+              animate={{ x: [-20, 20, -20] }}
+              transition={{ duration: 8, repeat: Infinity }}
+              d="M 0,250 L 150,250 M 250,250 L 400,250 M 200,0 L 200,220"
+              stroke="black" strokeWidth="0.6"
+            />
+          </svg>
+        </div>
+      );
+
+      // --- 视图视图组件 ---
+
+      const WelcomeView = () => (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="relative max-w-xl mx-auto px-8 py-20 text-center flex flex-col items-center justify-center min-h-screen">
+          <TheoryAnimation />
+          <div className="relative z-10">
+            <div className="mb-10 text-[10px] tracking-[0.6em] text-[#1A1A1A]/30 font-bold uppercase">2026 JOURNALISM ECHO PROJECT</div>
+            <h1 className="text-4xl md:text-5xl font-serif mb-10 leading-[2.2] text-[#1A1A1A] font-bold">
+              新传人“媒介存在主义”<br/>共振探索
+            </h1>
+            
+            <div className="space-y-6 mb-16 max-w-sm mx-auto">
+              <p className="text-base text-[#1A1A1A]/60 leading-loose font-light">
+                在这个信息的荒原里，每一个信号的捕获都是一场自我救赎。
+              </p>
+              <div className="w-10 h-[1px] bg-[#1A1A1A]/10 mx-auto" />
+              <p className="text-[12px] tracking-[0.2em] text-[#1A1A1A]/50 font-bold uppercase leading-relaxed">
+                基于媒介存在主义逻辑<br/>通过30组深度共振题<br/>解锁你的新传学术人格
+              </p>
+            </div>
+
+            <button 
+              onClick={() => setScreen('quiz')}
+              className="px-14 py-5 bg-[#1A1A1A] text-white tracking-[0.8em] uppercase font-bold hover:bg-black transition-all shadow-xl rounded-sm"
+            >
+              开启觉醒之旅
+            </button>
+            <div className="mt-20 text-[9px] tracking-[0.4em] text-[#1A1A1A]/20 uppercase font-sans">Created by @羊毛袜子薄荷糖</div>
+          </div>
+        </motion.div>
+      );
+
+      const QuizView = () => (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-2xl mx-auto px-8 py-16 flex flex-col min-h-screen relative z-10">
+          <div className="mb-16">
+            <div className="flex justify-between items-end mb-4">
+               <div className="flex flex-col gap-1 text-left">
+                  <span className="text-[10px] tracking-[0.2em] font-bold opacity-30 uppercase font-sans">PROTOCOL SIGNAL</span>
+                  <span className="text-sm md:text-base font-serif font-bold tracking-widest text-[#1A1A1A]">{QUESTIONS[currentIdx].chapter}</span>
+               </div>
+               <span className="font-serif italic text-base opacity-40">{currentIdx + 1} / {QUESTIONS.length}</span>
+            </div>
+            <div className="w-full h-[2px] bg-black/10">
+              <motion.div className="h-full bg-black/70" initial={{ width: 0 }} animate={{ width: `${((currentIdx+1)/QUESTIONS.length)*100}%` }} />
+            </div>
+          </div>
+
+          <div className="flex-grow flex flex-col justify-center py-10">
+            <AnimatePresence mode="wait">
+              <motion.div key={currentIdx} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.4 }}>
+                <h2 className="text-2xl md:text-4xl font-serif mb-20 leading-relaxed text-[#1A1A1A] text-center font-bold">
+                  {QUESTIONS[currentIdx].text}
+                </h2>
+                <div className="flex flex-col gap-6 w-full max-w-lg mx-auto">
+                  {['a', 'b'].map(key => (
+                    <button 
+                      key={key} 
+                      onClick={() => handleAnswer(key)}
+                      className="w-full text-left p-10 border border-black/10 bg-white/60 hover:bg-white hover:border-black/40 transition-all rounded-sm group flex items-center justify-between shadow-sm"
+                    >
+                      <span className="text-lg md:text-xl font-light text-black/80 group-hover:text-black leading-relaxed">{QUESTIONS[currentIdx][key]}</span>
+                      <div className="w-5 h-5 border border-black/20 rounded-full group-hover:bg-black/10 transition-colors shrink-0 ml-4" />
+                    </button>
+                  ))}
+                </div>
+              </motion.div>
+            </AnimatePresence>
+          </div>
+
+          <div className="mt-16 flex justify-between items-center">
+            <button onClick={() => setScreen('welcome')} className="flex items-center gap-3 text-[11px] tracking-[0.4em] uppercase opacity-30 hover:opacity-100 font-bold transition-all">
+              <ChevronLeft size={16} /> 放弃探索
+            </button>
+            <div className="text-[10px] tracking-[0.4em] text-[#1A1A1A]/20 font-sans italic">@羊毛袜子薄荷糖</div>
+          </div>
+        </motion.div>
+      );
+
+      const AnalyzingView = () => (
+        <div className="flex flex-col items-center justify-center min-h-screen text-center p-8 bg-[#F8F8F8]">
+          <RefreshCw className="animate-spin opacity-20 text-black mb-8" size={64} />
+          <h3 className="text-2xl font-serif tracking-[0.4em] uppercase font-bold text-black">正在打捞遗落的共鸣...</h3>
+          <p className="text-sm tracking-[0.6em] opacity-40 italic uppercase text-black mt-4">Decoding resonance DNA</p>
+        </div>
+      );
+
+      const ResultView = () => (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-2xl mx-auto px-4 py-16 flex flex-col items-center overflow-y-auto min-h-screen relative z-10">
+          
+          {/* 核心海报区 - 截图区域包含所有关键信息 */}
+          <div ref={posterRef} className="w-full bg-white p-10 md:p-16 shadow-2xl border border-black/5 flex flex-col aspect-auto relative mb-16 overflow-hidden rounded-sm">
+            <div className="flex justify-between items-center text-[10px] tracking-[0.6em] font-sans font-bold opacity-30 uppercase mb-12">
+              <span>Final Report</span>
+              <span>No. 2026-RESONANCE</span>
+            </div>
+
+            <div className="space-y-16">
+              <div className="flex justify-center opacity-80 text-black">{result.icon}</div>
+              <div className="space-y-3 text-center">
+                <h1 className="text-4xl md:text-5xl font-serif tracking-[0.3em] uppercase italic font-bold text-black">{result.title}</h1>
+                <p className="text-[10px] tracking-[0.6em] opacity-40 uppercase font-sans font-bold text-black">{result.eng}</p>
+              </div>
+
+              <div className="p-10 border border-black/5 bg-black/[0.01] relative max-w-sm mx-auto text-center rounded-sm">
+                <Quote className="absolute -top-4 -left-4 opacity-5 text-black" size={64} />
+                <p className="text-xl font-serif italic leading-relaxed mb-6 font-medium text-black">“{result.quote}”</p>
+                <div className="pt-6 border-t border-black/5 text-[10px] opacity-40 italic tracking-widest font-sans text-black uppercase leading-relaxed">{result.source}</div>
+              </div>
+
+              {/* 新传特质对齐 - 样式修正：确保文字垂直水平绝对居中 */}
+              <div className="space-y-6">
+                <h4 className="text-[10px] tracking-[0.4em] font-bold uppercase opacity-30 text-center">新传特质对齐</h4>
+                <div className="flex flex-wrap justify-center gap-3">
+                  {result.traits.map(t => (
+                    <div key={t} className="h-11 px-8 bg-black/5 border border-black/10 rounded-full flex items-center justify-center">
+                      <span className="text-[11px] opacity-80 tracking-[0.2em] font-sans uppercase font-bold text-black leading-none">
+                        {t}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* 深度解读：完整包含在截图区域内 */}
+              <div className="space-y-8 py-10 border-t border-black/5">
+                <h4 className="text-[10px] tracking-[0.5em] font-bold uppercase opacity-30 text-center flex items-center justify-center gap-4 font-sans">
+                  <div className="w-4 h-[1px] bg-black opacity-10" /> 深度画像解读 <div className="w-4 h-[1px] bg-black opacity-10" />
+                </h4>
+                <p className="text-base font-light leading-loose text-justify opacity-70 font-serif text-black px-6 italic">
+                  {result.description}
+                </p>
+              </div>
+            </div>
+
+            <div className="pt-10 border-t border-black/5 flex justify-between items-center text-[10px] tracking-[0.6em] opacity-20 uppercase font-sans font-bold mt-12">
+              <span>EXPLORER ECHO</span>
+              <span>By @羊毛袜子薄荷糖</span>
+            </div>
+          </div>
+
+          {/* 操作按钮区 */}
+          <div className="w-full max-w-lg space-y-8">
+            <div className="bg-[#1A1A1A] text-[#E0E0E0] p-10 rounded-sm shadow-xl">
+              <h4 className="text-[10px] tracking-[0.6em] uppercase text-center opacity-40 font-bold mb-10 font-sans">专业属性权重 Matrix</h4>
+              <div className="space-y-8">
+                {Object.entries(result.stats).map(([label, val]) => (
+                  <div key={label}>
+                    <div className="flex justify-between text-[11px] mb-3 opacity-60 tracking-[0.5em] font-sans"><span>{label}</span><span>{val}%</span></div>
+                    <div className="h-[1px] bg-white/10 overflow-hidden"><motion.div initial={{ width: 0 }} animate={{ width: `${val}%` }} transition={{ delay: 0.5, duration: 1.5 }} className="h-full bg-white/70" /></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-4 pb-20">
+              <button onClick={savePoster} className="w-full flex items-center justify-center gap-4 py-6 bg-[#1A1A1A] text-white text-[12px] tracking-[0.8em] uppercase font-bold hover:bg-black transition-all shadow-xl rounded-sm">
+                <Download size={20}/> 保存觉醒海报
+              </button>
+              <button onClick={reset} className="w-full flex items-center justify-center gap-4 py-6 border border-black/20 text-[#1A1A1A]/60 text-[11px] tracking-[0.6em] uppercase font-bold hover:bg-black/5 transition-all rounded-sm">
+                <RefreshCw size={18}/> 重新开启探索
+              </button>
+            </div>
+          </div>
+        </motion.div>
+      );
+
+      return (
+        <div className="min-h-screen bg-[#F8F8F8] text-[#1A1A1A] selection:bg-black selection:text-white overflow-x-hidden font-serif">
+          <div className="fixed inset-0 pointer-events-none opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/paper.png')]" />
+          
+          <main className="relative z-10">
+            <AnimatePresence mode="wait">
+              {screen === 'welcome' && <WelcomeView key="welcome" />}
+              {screen === 'quiz' && <QuizView key="quiz" />}
+              {screen === 'analyzing' && <AnalyzingView key="analyzing" />}
+              {screen === 'result' && <ResultView key="result" />}
+            </AnimatePresence>
+          </main>
+        </div>
+      );
+    };
+
+    const root = createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
